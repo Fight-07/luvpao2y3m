@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การ์ดครบรอบของเรา</title>
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#25234A; --foil:#C9BDF2; --rose:#FF8FA3; --blush:#FFF1EC; --plum:#3A2A55;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{
+  margin:0; min-height:100vh; padding:28px 20px 48px;
+  background:radial-gradient(120% 80% at 50% 0%,#3B3770 0%,var(--night) 60%);
+  color:var(--blush);
+  font-family:"Mali","Noto Sans Thai","Sarabun",system-ui,sans-serif;
+  display:flex; justify-content:center;
+}
+.wrap{width:min(560px,100%);text-align:center}
+h1{font-size:clamp(24px,4.5vw,32px);font-weight:700;margin:8px 0 6px}
+.sub{margin:0 0 22px;opacity:.85;font-size:clamp(15px,2.6vw,18px)}
+.card{
+  position:relative; aspect-ratio:4/3.4; border-radius:28px; overflow:hidden;
+  background:var(--blush); color:var(--plum);
+  box-shadow:0 18px 40px rgba(10,8,30,.45);
+}
+.reveal{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,2.4vw,16px);padding:16px}
+.reveal small{font-size:clamp(17px,3.2vw,22px);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:440px}
+.cell b{display:block;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.cell span{display:block;font-weight:600}
+.grid.big b{font-size:clamp(46px,13vw,84px);color:var(--rose)}
+.grid.big span{font-size:clamp(16px,3vw,22px)}
+.grid.small b{font-size:clamp(26px,7vw,42px);color:var(--plum)}
+.grid.small span{font-size:clamp(13px,2.4vw,17px);opacity:.85}
+canvas{
+  position:absolute;inset:0;width:100%;height:100%;
+  touch-action:none;cursor:grab;transition:opacity .9s ease;
+}
+canvas.done{opacity:0;pointer-events:none}
+.btn{
+  font:inherit;font-weight:600;font-size:clamp(16px,2.8vw,19px);
+  border:0;border-radius:999px;padding:12px 26px;margin-top:20px;
+  background:var(--rose);color:#fff;cursor:pointer;
+}
+.btn:focus-visible,.skip:focus-visible,.mute:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.btn[hidden]{display:none}
+.skip{
+  font:inherit;font-size:14px;margin-top:14px;background:none;border:0;
+  color:var(--blush);opacity:.6;text-decoration:underline;cursor:pointer;
+}
+.skip[hidden]{display:none}
+.mute{
+  position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);right:14px;z-index:6;
+  width:44px;height:44px;border-radius:50%;border:0;font-size:22px;line-height:1;
+  background:rgba(255,241,236,.18);color:var(--blush);cursor:pointer;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.mute[hidden]{display:none}
+.letter{max-height:0;overflow:hidden;transition:max-height .8s ease}
+.letter.open{max-height:1200px}
+.paper{
+  margin-top:18px;background:var(--blush);color:var(--plum);
+  border-radius:22px;padding:24px 26px;text-align:left;line-height:1.9;
+  font-size:clamp(16px,2.8vw,19px);
+}
+.paper p{margin:0 0 12px}
+.paper .from{margin:16px 0 0;text-align:right;font-weight:600;color:var(--rose)}
+.heart{position:fixed;bottom:-48px;pointer-events:none;z-index:5;animation:rise 4.5s ease-in forwards}
+@keyframes rise{to{transform:translateY(-115vh) rotate(18deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){canvas,.letter{transition:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1 id="title"></h1>
+  <p class="sub" id="sub">ใช้นิ้วขูดการ์ดดูนะ</p>
+
+  <div class="card">
+    <div class="reveal" aria-live="off">
+      <small>วันครบรอบ</small>
+      <div class="grid big">
+        <div class="cell"><b id="y">0</b><span>ปี</span></div>
+        <div class="cell"><b id="mo">0</b><span>เดือน</span></div>
+        <div class="cell"><b id="d">0</b><span>วัน</span></div>
+      </div>
+      <div class="grid small">
+        <div class="cell"><b id="h">0</b><span>ชั่วโมง</span></div>
+        <div class="cell"><b id="mi">0</b><span>นาที</span></div>
+        <div class="cell"><b id="s">0</b><span>วินาที</span></div>
+      </div>
+    </div>
+    <canvas id="foil" role="img" aria-label="แผ่นฟอยล์ปิดทับ ขูดด้วยนิ้วเพื่อเปิดดู"></canvas>
+  </div>
+
+  <button class="skip" id="skip" type="button">กดปุ่มนี้นะถ้านิ้วอ้วน</button>
+  <button class="btn" id="open" type="button" hidden>เปิดจดหมาย</button>
+
+  <section class="letter" id="letter" aria-label="จดหมาย">
+    <div class="paper" id="paper"></div>
+  </section>
+</main>
+
+<button class="mute" id="mute" type="button" aria-label="ปิด/เปิดเสียงเพลง" hidden>🔊</button>
+
+<!-- เพลง: วางไฟล์เพลงไว้โฟลเดอร์เดียวกับไฟล์นี้ (หรือเปลี่ยนชื่อไฟล์ตรง src) -->
+<audio id="bgm" src="ssstik.io_1795171461531.mp3" loop preload="auto"></audio>
+
+<script>
+/* ===== แก้ตรงนี้ได้เลย ===== */
+const CONFIG = {
+  name: "FOR SALAPAO",                 // ชื่อหรือชื่อเล่นแฟน
+  start: "2024-8-20 20:00",       // วันและเวลาที่เริ่มคบกัน (ปี-เดือน-วัน ชั่วโมง:นาที แบบ 24 ชม.)
+  from: "รักเปานะครับ",          // ลงท้ายจดหมาย
+  volume: 0.6,                    // ความดังเพลง 0 ถึง 1
+  letter: [
+    "วันครบรอบนี้อาจจะไม่หวือหวาแต่ขอบคุณเปานะที่อยู่ด้วยกันมาตลอดทุกๆช่วงเวลาของชีวิตพี่มีความสุขมากๆเลยถึงบางช่วงพี่อาจจะทำมันไม่เต็มที่แต่พี่ก็อยากจะทำให้มันออกมาดีถึงในตอนนั้นมันจะไม่ดีหรือไม่โอเคสำหรับเปาตอนนี้พี่อยากจะขอโทษเปาด้วยนะครับที่ละเลยความรู้สึกเปาไปในเรื่องใหญ่หรือเรื่องเล็กต่างๆก็อยากจะขอโทษเปามากๆเลยที่หาเวลามาแสดงความรักหรือภาษารักให้เปาไม่ได้ ขอให้ในอนาคตเราทั้งคู่ได้อยู่ด้วยกันอย่างมีความสุขนะครับพี่รักเปามากๆอยากให้มีกันและกันอยู่แบบนี้ไปตลอดึงแม้เราทั้งคู่จะฝืนชะตาไพ่ที่บอกแต่พี่รู้สึกการฝืนครั้งนี้มันคุ้มกับตัวพีเพราะพี่รู้สึกการไม่มีเปาเหมือนบางอย่างมันได้หายไปเลยอยู่ทะเลาะอยู่ตีกันแบบนี้ไปนานๆนะครับรักเปาที่สุดอย่าลืมรักที่เรามีให้กันนะครับมันสำคัญสำหรับเราทั้งคู่มากพี่อาจจะแสดงความรักออกมาไม่ดีเท่าเพื่อนๆของเปาแต่พี่ก็พยายามทำให้มันเต็มที่รักเปานะคะจุ้บๆๆๆๆๆครบรอบปีนี้อาจจะไม่ได้มีอะไรสวยหรูนะครับมีเวลาพี่ก็มานั่งทำให้นะคะ"
+
+  ]
+};
+/* ========================= */
+
+const $ = id => document.getElementById(id);
+$("title").textContent = "ถึง" + CONFIG.name;
+
+/* ตัวนับวันรัก: ปี เดือน วัน ชั่วโมง นาที วินาที */
+const [datePart, timePart = "0:0"] = CONFIG.start.trim().split(/\s+/);
+const [y0, m0, d0] = datePart.split("-").map(Number);
+const [hh0, mm0] = timePart.split(":").map(Number);
+const start = new Date(y0, m0 - 1, d0, hh0 || 0, mm0 || 0);
+
+/* บวกเดือนให้วันที่ แต่ไม่ให้ล้นเดือน (เช่น 31 ม.ค. + 1 เดือน = 28/29 ก.พ.) */
+function addMonths(date, n) {
+  const r = new Date(date.getFullYear(), date.getMonth() + n, 1,
+    date.getHours(), date.getMinutes(), date.getSeconds());
+  const lastDay = new Date(r.getFullYear(), r.getMonth() + 1, 0).getDate();
+  r.setDate(Math.min(date.getDate(), lastDay));
+  return r;
+}
+
+function tick() {
+  const now = new Date();
+  if (now <= start) { ["y", "mo", "d", "h", "mi", "s"].forEach(k => $(k).textContent = 0); return; }
+  let months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+  if (addMonths(start, months) > now) months--;
+  const rest = now - addMonths(start, months);
+  $("y").textContent = Math.floor(months / 12);
+  $("mo").textContent = months % 12;
+  $("d").textContent = Math.floor(rest / 864e5);
+  $("h").textContent = Math.floor((rest % 864e5) / 36e5);
+  $("mi").textContent = Math.floor((rest % 36e5) / 6e4);
+  $("s").textContent = Math.floor((rest % 6e4) / 1e3);
+}
+tick(); setInterval(tick, 1000);
+
+/* จดหมาย */
+CONFIG.letter.forEach(t => { const p = document.createElement("p"); p.textContent = t; $("paper").appendChild(p); });
+const from = document.createElement("p"); from.className = "from"; from.textContent = CONFIG.from; $("paper").appendChild(from);
+
+/* เพลง: พยายามเล่นทันทีที่เข้าเว็บ และวนซ้ำจนกว่าจะปิดเว็บ
+   (iPad/Safari บล็อกเสียงอัตโนมัติ เลยให้เริ่มเล่นตอนแตะหน้าจอครั้งแรกแทน เช่นตอนเริ่มขูดการ์ด) */
+const bgm = $("bgm"), muteBtn = $("mute");
+bgm.volume = CONFIG.volume;
+let musicOn = true;
+const unlockEvents = ["pointerup", "touchend", "click", "keydown"];
+function removeUnlock() { unlockEvents.forEach(ev => document.removeEventListener(ev, startMusic)); }
+function startMusic() {
+  if (!musicOn || !bgm.paused) return;
+  const p = bgm.play();
+  if (p && p.then) {
+    p.then(() => { muteBtn.hidden = false; removeUnlock(); }).catch(() => {});
+  } else { muteBtn.hidden = false; removeUnlock(); }
+}
+unlockEvents.forEach(ev => document.addEventListener(ev, startMusic, { passive: true }));
+startMusic();
+muteBtn.addEventListener("click", () => {
+  musicOn = !musicOn;
+  if (musicOn) { bgm.play().catch(() => {}); } else { bgm.pause(); }
+  muteBtn.textContent = musicOn ? "🔊" : "🔇";
+});
+
+$("open").addEventListener("click", () => {
+  const open = $("letter").classList.toggle("open");
+  $("open").textContent = open ? "ปิดจดหมาย" : "เปิดจดหมาย";
+  if (open) {
+    $("letter").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+});
+
+/* ฟอยล์ขูด */
+const cv = $("foil"), ctx = cv.getContext("2d");
+let drawing = false, scratched = false, revealed = false, last = null;
+
+function paintFoil() {
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  cv.width = r.width * dpr; cv.height = r.height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const g = ctx.createLinearGradient(0, 0, r.width, r.height);
+  g.addColorStop(0, "#D9CFF7"); g.addColorStop(.5, "#B7A8EA"); g.addColorStop(1, "#D9CFF7");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, r.width, r.height);
+  ctx.fillStyle = "rgba(255,255,255,.55)";
+  for (let i = 0; i < 70; i++) {
+    ctx.beginPath();
+    ctx.arc(Math.random() * r.width, Math.random() * r.height, Math.random() * 2.2 + .4, 0, 7);
+    ctx.fill();
+  }
+  ctx.fillStyle = "#3A2A55"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.font = `700 ${Math.max(22, r.width / 13)}px Mali, sans-serif`;
+  ctx.fillText("ขูดตรงนี้ได้เลย", r.width / 2, r.height / 2 - 4);
+  ctx.font = `${Math.max(26, r.width / 11)}px sans-serif`;
+  ctx.fillText("💌", r.width / 2, r.height / 2 + r.width / 9);
+}
+(document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(paintFoil);
+window.addEventListener("resize", () => { if (!scratched && !revealed) paintFoil(); });
+
+function pos(e) { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+function stroke(a, b) {
+  ctx.globalCompositeOperation = "destination-out";
+  ctx.lineWidth = 46; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+}
+cv.addEventListener("pointerdown", e => {
+  drawing = true; scratched = true; cv.setPointerCapture(e.pointerId);
+  last = pos(e); stroke(last, last);
+});
+cv.addEventListener("pointermove", e => {
+  if (!drawing) return;
+  const p = pos(e); stroke(last, p); last = p;
+});
+function endStroke() { if (!drawing) return; drawing = false; checkCleared(); }
+cv.addEventListener("pointerup", endStroke);
+cv.addEventListener("pointercancel", endStroke);
+
+function checkCleared() {
+  if (revealed) return;
+  const w = cv.width, h = cv.height, data = ctx.getImageData(0, 0, w, h).data;
+  let total = 0, clear = 0;
+  for (let yy = 0; yy < h; yy += 24) for (let xx = 0; xx < w; xx += 24) {
+    total++; if (data[(yy * w + xx) * 4 + 3] < 128) clear++;
+  }
+  if (clear / total > 0.5) reveal();
+}
+
+function reveal() {
+  if (revealed) return;
+  revealed = true;
+  cv.classList.add("done");
+  $("skip").hidden = true;
+  $("open").hidden = false;
+  $("sub").textContent = "สุขสันต์วันครบรอบนะ";
+  hearts();
+}
+$("skip").addEventListener("click", reveal);
+
+function hearts() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const set = ["💗", "💕", "✨", "💖"];
+  for (let i = 0; i < 26; i++) {
+    const s = document.createElement("span");
+    s.className = "heart"; s.textContent = set[i % set.length];
+    s.style.left = Math.random() * 96 + "vw";
+    s.style.animationDelay = Math.random() * 1.4 + "s";
+    s.style.fontSize = 18 + Math.random() * 22 + "px";
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 7000);
+  }
+}
+</script>
+</body>
+</html>
